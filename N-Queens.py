@@ -9,8 +9,8 @@ def fitness(chromosome):
     horizontal_collisions = sum([chromosome.count(queen) - 1 for queen in chromosome]) / 2
 
     n = len(chromosome)
-    left_diagonal = [0] * 2 * n
-    right_diagonal = [0] * 2 * n
+    left_diagonal = [0] * (2 * n - 1)
+    right_diagonal = [0] * (2 * n - 1)
     for i in range(n):
         left_diagonal[i + chromosome[i] - 1] += 1
         right_diagonal[len(chromosome) - i + chromosome[i] - 2] += 1
@@ -22,25 +22,23 @@ def fitness(chromosome):
             counter += left_diagonal[i] - 1
         if right_diagonal[i] > 1:
             counter += right_diagonal[i] - 1
-        diagonal_collisions += counter / (n - abs(i - n + 1))
+        diagonal_collisions += counter
 
     return int(maxFitness - (horizontal_collisions + diagonal_collisions))  # 28-(2+3)=23
 
 
-def probability(chromosome, fitness):
+def probability(chromosome):
     return fitness(chromosome) / maxFitness
 
 
 def random_pick(population, probabilities):
-    populationWithProbabilty = zip(population, probabilities)
-    total = sum(w for c, w in populationWithProbabilty)
+    total = sum(probabilities)
     r = random.uniform(0, total)
     upto = 0
     for c, w in zip(population, probabilities):
         if upto + w >= r:
             return c
         upto += w
-    assert False, "Shouldn't get here"
 
 
 def reproduce(x, y):  # cross_over between two chromosomes
@@ -57,10 +55,10 @@ def mutate(x):  # randomly changing the value of a random index of a chromosome
     return x
 
 
-def genetic_queen(population, fitness):
+def genetic_queen(population):
     mutation_probability = 0.03
     new_population = []
-    probabilities = [probability(n, fitness) for n in population]
+    probabilities = [probability(n) for n in population]
     for i in range(len(population)):
         x = random_pick(population, probabilities)  # best chromosome 1
         y = random_pick(population, probabilities)  # best chromosome 2
@@ -74,8 +72,7 @@ def genetic_queen(population, fitness):
 
 
 def print_chromosome(chrom):
-    print("Chromosome = {},  Fitness = {}"
-          .format(str(chrom), fitness(chrom)))
+    print(f"Chromosome = {chrom},  Fitness = {fitness(chrom)}")
 
 
 if __name__ == "__main__":
@@ -88,34 +85,38 @@ if __name__ == "__main__":
 
         generation = 1
 
-        while not maxFitness in [fitness(chrom) for chrom in population]:
-            print("=== Generation {} ===".format(generation))
-            population = genetic_queen(population, fitness)
-            print("")
-            print("Maximum Fitness = {}".format(max([fitness(n) for n in population])))
+        while generation < 1000 and not maxFitness in [fitness(chrom) for chrom in population]:
+            print(f"=== Generation {generation} ===")
+            population = genetic_queen(population)
+            print()
+            print(f"Maximum Fitness = {max([fitness(n) for n in population])}")
             generation += 1
-        chrom_out = []
-        print("Solved in Generation {}".format(generation - 1))
-        for chrom in population:
-            if fitness(chrom) == maxFitness:
-                print("")
-                print("One of the solutions: ")
-                chrom_out = chrom
-                print_chromosome(chrom)
 
-        board = []
+        if generation == 1000:
+            print("Generations crossed 1000! Repeat the process.")
 
-        for x in range(num_of_queens):
-            board.append(["x"] * num_of_queens)
+        else:
+            chrom_out = []
+            print(f"Solved in Generation {generation - 1}")
+            for chrom in population:
+                if fitness(chrom) == maxFitness:
+                    print("")
+                    print("One of the solutions: ")
+                    chrom_out = chrom
+                    print_chromosome(chrom)
 
-        for i in range(num_of_queens):
-            board[chrom_out[i]-1][i] = "Q"
+            board = []
+
+            for x in range(num_of_queens):
+                board.append(["x"] * num_of_queens)
+
+            for i in range(num_of_queens):
+                board[chrom_out[i]-1][i] = "Q"
 
 
-        def print_board(board):
-            for row in board:
-                print(" ".join(row))
+            def print_board(board):
+                for row in board:
+                    print(" ".join(row))
 
-
-        print()
-        print_board(board)
+            print()
+            print_board(board)
